@@ -4,14 +4,14 @@
  * Main Algolia Woo Indexer class
  * Called from main plugin file algolia-woo-indexer.php
  *
- * @package algolia-woo-indexer
+ * @package algolia-woo-category-indexer
  */
 
-namespace Algowoo;
+namespace AlgowooCats;
 
-use \Algowoo\Algolia_Check_Requirements as Algolia_Check_Requirements;
-use \Algowoo\Algolia_Verify_Nonces as Algolia_Verify_Nonces;
-use \Algowoo\Algolia_Send_Products as Algolia_Send_Products;
+use \AlgowooCats\Algolia_Check_Requirements as Algolia_Check_Requirements;
+use \AlgowooCats\Algolia_Verify_Nonces as Algolia_Verify_Nonces;
+use \AlgowooCats\Algolia_Send_Categories as Algolia_Send_Categories;
 
 /**
  * Abort if this file is called directly
@@ -27,15 +27,14 @@ if (!function_exists('is_plugin_active')) {
     require_once(ABSPATH . '/wp-admin/includes/plugin.php');
 }
 
-if (!class_exists('Algolia_Woo_Indexer')) {
+if (!class_exists('Algolia_Woo_Category_Indexer')) {
     /**
      * Algolia WooIndexer main class
      */
-    // TODO Rename class "Algolia_Woo_Indexer" to match the regular expression ^[A-Z][a-zA-Z0-9]*$.
-    class Algolia_Woo_Indexer
+    class Algolia_Woo_Category_Indexer
     {
-        const PLUGIN_NAME      = 'Algolia Woo Indexer';
-        const PLUGIN_TRANSIENT = 'algowoo-plugin-notice';
+        const PLUGIN_NAME      = 'Algolia Woo Category Indexer';
+        const PLUGIN_TRANSIENT = 'algowoocat-plugin-notice';
 
         /**
          * Class instance
@@ -79,7 +78,7 @@ if (!class_exists('Algolia_Woo_Indexer')) {
                     'sanitize_callback' => 'settings_fields_validate_options',
                     'default'           => null,
                 );
-                register_setting('algolia_woo_options', 'algolia_woo_options', $arguments);
+                register_setting('algolia_woo_category_options', 'algolia_woo_category_options', $arguments);
 
                 /**
                  * Make sure we reference the instance of the current class by using self::get_instance()
@@ -91,38 +90,38 @@ if (!class_exists('Algolia_Woo_Indexer')) {
                  * Add our necessary settings sections and fields
                  */
                 add_settings_section(
-                    'algolia_woo_indexer_main',
-                    esc_html__('Algolia Woo Plugin Settings', 'algolia-woo-indexer'),
-                    array($algowooindexer, 'algolia_woo_indexer_section_text'),
-                    'algolia_woo_indexer'
+                    'algolia_woo_category_indexer_main',
+                    esc_html__('Algolia Woo Category Plugin Settings', 'algolia-woo-category-indexer'),
+                    array($algowooindexer, 'algolia_woo_category_indexer_section_text'),
+                    'algolia_woo_category_indexer'
                 );
                 add_settings_field(
-                    'algolia_woo_indexer_application_id',
-                    esc_html__('Application ID', 'algolia-woo-indexer'),
-                    array($algowooindexer, 'algolia_woo_indexer_application_id_output'),
-                    'algolia_woo_indexer',
-                    'algolia_woo_indexer_main'
+                    'algolia_woo_category_indexer_application_id',
+                    esc_html__('Application ID', 'algolia-woo-category-indexer'),
+                    array($algowooindexer, 'algolia_woo_category_indexer_application_id_output'),
+                    'algolia_woo_category_indexer',
+                    'algolia_woo_category_indexer_main'
                 );
                 add_settings_field(
-                    'algolia_woo_indexer_admin_api_key',
-                    esc_html__('Admin API Key', 'algolia-woo-indexer'),
-                    array($algowooindexer, 'algolia_woo_indexer_admin_api_key_output'),
-                    'algolia_woo_indexer',
-                    'algolia_woo_indexer_main'
+                    'algolia_woo_category_indexer_admin_api_key',
+                    esc_html__('Admin API Key', 'algolia-woo-category-indexer'),
+                    array($algowooindexer, 'algolia_woo_category_indexer_admin_api_key_output'),
+                    'algolia_woo_category_indexer',
+                    'algolia_woo_category_indexer_main'
                 );
                 add_settings_field(
-                    'algolia_woo_indexer_index_name',
-                    esc_html__('Index name (will be created if not existing)', 'algolia-woo-indexer'),
-                    array($algowooindexer, 'algolia_woo_indexer_index_name_output'),
-                    'algolia_woo_indexer',
-                    'algolia_woo_indexer_main'
+                    'algolia_woo_category_indexer_index_name',
+                    esc_html__('Index name (will be created if not existing)', 'algolia-woo-category-indexer'),
+                    array($algowooindexer, 'algolia_woo_category_indexer_index_name_output'),
+                    'algolia_woo_category_indexer',
+                    'algolia_woo_category_indexer_main'
                 );
                 add_settings_field(
-                    'algolia_woo_indexer_automatically_send_new_products',
-                    esc_html__('Automatically index new products', 'algolia-woo-indexer'),
-                    array($algowooindexer, 'algolia_woo_indexer_automatically_send_new_products_output'),
-                    'algolia_woo_indexer',
-                    'algolia_woo_indexer_main'
+                    'algolia_woo_category_indexer_automatically_send_new_categories',
+                    esc_html__('Automatically index new categories', 'algolia-woo-category-indexer'),
+                    array($algowooindexer, 'algolia_woo_category_indexer_automatically_send_new_categories_output'),
+                    'algolia_woo_category_indexer',
+                    'algolia_woo_category_indexer_main'
                 );
             }
         }
@@ -134,14 +133,14 @@ if (!class_exists('Algolia_Woo_Indexer')) {
          *
          * @return void
          */
-        public static function algolia_woo_indexer_admin_api_key_output()
+        public static function algolia_woo_category_indexer_admin_api_key_output()
         {
-            $api_key = get_option(ALGOWOO_DB_OPTION . ALGOLIA_API_KEY);
+            $api_key = get_option(ALGOWOOCAT_DB_OPTION . ALGOLIA_API_KEY);
             $api_key = is_string($api_key) ? $api_key : CHANGE_ME;
 
-            wp_nonce_field('algolia_woo_indexer_admin_api_nonce_action', 'algolia_woo_indexer_admin_api_nonce_name');
+            wp_nonce_field('algolia_woo_category_indexer_admin_api_nonce_action', 'algolia_woo_category_indexer_admin_api_nonce_name');
 
-            echo "<input id='algolia_woo_indexer_admin_api_key' name='algolia_woo_indexer_admin_api_key[key]'
+            echo "<input id='algolia_woo_category_indexer_admin_api_key' name='algolia_woo_category_indexer_admin_api_key[key]'
 				type='text' value='" . esc_attr($api_key) . "' />";
         }
 
@@ -150,12 +149,12 @@ if (!class_exists('Algolia_Woo_Indexer')) {
          *
          * @return void
          */
-        public static function algolia_woo_indexer_application_id_output()
+        public static function algolia_woo_category_indexer_application_id_output()
         {
-            $application_id = get_option(ALGOWOO_DB_OPTION . ALGOLIA_APP_ID);
+            $application_id = get_option(ALGOWOOCAT_DB_OPTION . ALGOLIA_APP_ID);
             $application_id = is_string($application_id) ? $application_id : CHANGE_ME;
 
-            echo "<input id='algolia_woo_indexer_application_id' name='algolia_woo_indexer_application_id[id]'
+            echo "<input id='algolia_woo_category_indexer_application_id' name='algolia_woo_category_indexer_application_id[id]'
 				type='text' value='" . esc_attr($application_id) . "' />";
         }
 
@@ -164,12 +163,12 @@ if (!class_exists('Algolia_Woo_Indexer')) {
          *
          * @return void
          */
-        public static function algolia_woo_indexer_index_name_output()
+        public static function algolia_woo_category_indexer_index_name_output()
         {
-            $index_name = get_option(ALGOWOO_DB_OPTION . INDEX_NAME);
+            $index_name = get_option(ALGOWOOCAT_DB_OPTION . INDEX_NAME);
             $index_name = is_string($index_name) ? $index_name : CHANGE_ME;
 
-            echo "<input id='algolia_woo_indexer_index_name' name='algolia_woo_indexer_index_name[name]'
+            echo "<input id='algolia_woo_category_indexer_index_name' name='algolia_woo_category_indexer_index_name[name]'
 				type='text' value='" . esc_attr($index_name) . "' />";
         }
 
@@ -178,15 +177,15 @@ if (!class_exists('Algolia_Woo_Indexer')) {
          *
          * @return void
          */
-        public static function algolia_woo_indexer_automatically_send_new_products_output()
+        public static function algolia_woo_category_indexer_automatically_send_new_categories_output()
         {
             /**
              * Sanitization is not really needed as the variable is not directly echoed
              * But I have still done it to be 100% safe
              */
-            $auto_send = get_option(ALGOWOO_DB_OPTION . AUTOMATICALLY_SEND_NEW_PRODUCTS);
+            $auto_send = get_option(ALGOWOOCAT_DB_OPTION . AUTOMATICALLY_SEND_NEW_CATEGORIES);
             $auto_send = (!empty($auto_send)) ? 1 : 0; ?>
-            <input id="algolia_woo_indexer_automatically_send_new_products" name="algolia_woo_indexer_automatically_send_new_products[checked]" type="checkbox" <?php checked(1, $auto_send); ?> />
+            <input id="algolia_woo_category_indexer_automatically_send_new_categories" name="algolia_woo_category_indexer_automatically_send_new_categories[checked]" type="checkbox" <?php checked(1, $auto_send); ?> />
         <?php
         }
 
@@ -195,20 +194,20 @@ if (!class_exists('Algolia_Woo_Indexer')) {
          *
          * @return void
          */
-        public static function algolia_woo_indexer_section_text()
+        public static function algolia_woo_category_indexer_section_text()
         {
-            echo esc_html__('Enter your settings here', 'algolia-woo-indexer');
+            echo esc_html__('Enter your settings here', 'algolia-woo-category-indexer');
         }
 
         /**
-         * Check if we are going to send products by verifying send products nonce
+         * Check if we are going to send categories by verifying send categories nonce
          *
          * @return void
          */
-        public static function maybe_send_products()
+        public static function maybe_send_categories()
         {
-            if (true === Algolia_Verify_Nonces::verify_send_products_nonce()) {
-                Algolia_Send_Products::send_products_to_algolia();
+            if (true === Algolia_Verify_Nonces::verify_send_categories_nonce()) {
+                Algolia_Send_Categories::send_categories_to_algolia();
             }
         }
 
@@ -223,7 +222,7 @@ if (!class_exists('Algolia_Woo_Indexer')) {
             /**
              * Fetch the option to see if we are going to automatically send new products
              */
-            $auto_send = get_option(ALGOWOO_DB_OPTION . AUTOMATICALLY_SEND_NEW_PRODUCTS);
+            $auto_send = get_option(ALGOWOOCAT_DB_OPTION . AUTOMATICALLY_SEND_NEW_CATEGORIES);
 
             /**
              * Check that we have the minimum versions required and all of the required PHP extensions
@@ -255,17 +254,18 @@ if (!class_exists('Algolia_Woo_Indexer')) {
                 add_action('admin_menu', array($ob_class, 'admin_menu'));
                 add_action('admin_init', array($ob_class, 'setup_settings_sections'));
                 add_action('admin_init', array($ob_class, 'update_settings_options'));
-                add_action('admin_init', array($ob_class, 'maybe_send_products'));
+                add_action('admin_init', array($ob_class, 'maybe_send_categories'));
 
                 /**
-                 * Register hook to automatically send new products if the option is set
+                 * Register hook to automatically send new categories if the option is set
                  */
 
                 if ('1' === $auto_send) {
-                    add_action('save_post', array($ob_class, 'send_new_product_to_algolia'), 10, 3);
+                    add_action('create_product_cat', array($ob_class, 'send_new_category_to_algolia'), 10, 3);
+                    add_action('saved_product_cat', array($ob_class, 'send_new_category_to_algolia'), 10, 3);
                 }
 
-                self::$plugin_url = admin_url('options-general.php?page=algolia-woo-indexer-settings');
+                self::$plugin_url = admin_url('options-general.php?page=algolia-woo-category-indexer-settings');
 
                 if (!is_plugin_active('woocommerce/woocommerce.php')) {
                     add_action(
@@ -288,12 +288,9 @@ if (!class_exists('Algolia_Woo_Indexer')) {
          *
          * @return void
          */
-        public static function send_new_product_to_algolia($post_id, $post)
+        public static function send_new_category_to_algolia($term_id, $term)
         {
-            if ('publish' !== $post->post_status || 'product' !== $post->post_type) {
-                return;
-            }
-            Algolia_Send_Products::send_products_to_algolia($post_id);
+            Algolia_Send_Categories::send_categories_to_algolia($post_id);
         }
 
         /**
@@ -306,14 +303,14 @@ if (!class_exists('Algolia_Woo_Indexer')) {
         {
             Algolia_Verify_Nonces::verify_settings_nonce();
 
-            if (Algolia_Verify_Nonces::verify_send_products_nonce()) {
+            if (Algolia_Verify_Nonces::verify_send_categories_nonce()) {
                 return;
             }
 
-            $application_id = filter_input(INPUT_POST, 'algolia_woo_indexer_application_id', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
-            $api_key = filter_input(INPUT_POST, 'algolia_woo_indexer_admin_api_key', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
-            $index_name = filter_input(INPUT_POST, 'algolia_woo_indexer_index_name', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
-            $auto_send = filter_input(INPUT_POST, 'algolia_woo_indexer_automatically_send_new_products', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+            $application_id = filter_input(INPUT_POST, 'algolia_woo_category_indexer_application_id', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+            $api_key = filter_input(INPUT_POST, 'algolia_woo_category_indexer_admin_api_key', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+            $index_name = filter_input(INPUT_POST, 'algolia_woo_category_indexer_index_name', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+            $auto_send = filter_input(INPUT_POST, 'algolia_woo_category_indexer_automatically_send_new_categories', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
 
             $sanitized_app_id = sanitize_text_field($application_id['id']);
             $sanitized_api_key = sanitize_text_field($api_key['key']);
@@ -321,10 +318,10 @@ if (!class_exists('Algolia_Woo_Indexer')) {
             $sanitized_auto_send = (!empty($auto_send)) ? 1 : 0;
 
             $options = [
-                ALGOWOO_DB_OPTION . ALGOLIA_APP_ID => $sanitized_app_id,
-                ALGOWOO_DB_OPTION . ALGOLIA_API_KEY => $sanitized_api_key,
-                ALGOWOO_DB_OPTION . INDEX_NAME => $sanitized_index_name,
-                ALGOWOO_DB_OPTION . AUTOMATICALLY_SEND_NEW_PRODUCTS => $sanitized_auto_send,
+                ALGOWOOCAT_DB_OPTION . ALGOLIA_APP_ID => $sanitized_app_id,
+                ALGOWOOCAT_DB_OPTION . ALGOLIA_API_KEY => $sanitized_api_key,
+                ALGOWOOCAT_DB_OPTION . INDEX_NAME => $sanitized_index_name,
+                ALGOWOOCAT_DB_OPTION . AUTOMATICALLY_SEND_NEW_CATEGORIES => $sanitized_auto_send,
             ];
 
             foreach ($options as $option_key => $option_value) {
@@ -361,7 +358,7 @@ if (!class_exists('Algolia_Woo_Indexer')) {
          */
         public static function load_textdomain()
         {
-            load_plugin_textdomain('algolia-woo-indexer', false, basename(dirname(__FILE__)) . '/languages/');
+            load_plugin_textdomain('algolia-woo-category-indexer', false, basename(dirname(__FILE__)) . '/languages/');
         }
 
         /**
@@ -373,11 +370,11 @@ if (!class_exists('Algolia_Woo_Indexer')) {
         {
             add_submenu_page(
                 'options-general.php',
-                esc_html__('Algolia Woo Indexer Settings', 'algolia-woo-indexer'),
-                esc_html__('Algolia Woo Indexer Settings', 'algolia-woo-indexer'),
+                esc_html__('Algolia Woo Category Indexer Settings', 'algolia-woo-category-indexer'),
+                esc_html__('Algolia Woo Category Indexer Settings', 'algolia-woo-category-indexer'),
                 'manage_options',
-                'algolia-woo-indexer-settings',
-                array(get_called_class(), 'algolia_woo_indexer_settings')
+                'algolia-woo-category-indexer-settings',
+                array(get_called_class(), 'algolia_woo_category_indexer_settings')
             );
         }
 
@@ -386,26 +383,26 @@ if (!class_exists('Algolia_Woo_Indexer')) {
          *
          * @return void
          */
-        public static function algolia_woo_indexer_settings()
+        public static function algolia_woo_category_indexer_settings()
         {
             /**
              * Verify that the user can access the settings page
              */
             if (!current_user_can('manage_options')) {
-                wp_die(esc_html__('Action not allowed.', 'algolia_woo_indexer_settings'));
+                wp_die(esc_html__('Action not allowed.', 'algolia_woo_category_indexer_settings'));
             } ?>
             <div class="wrap">
-                <h1><?php esc_html__('Algolia Woo Indexer Settings', 'algolia-woo-indexer'); ?></h1>
+                <h1><?php esc_html__('Algolia Woo Category Indexer Settings', 'algolia-woo-category-indexer'); ?></h1>
                 <form action="<?php echo esc_url(self::$plugin_url); ?>" method="POST">
                     <?php
-                    settings_fields('algolia_woo_options');
-                    do_settings_sections('algolia_woo_indexer');
+                    settings_fields('algolia_woo_category_options');
+                    do_settings_sections('algolia_woo_category_indexer');
                     submit_button('', 'primary wide'); ?>
                 </form>
                 <form action="<?php echo esc_url(self::$plugin_url); ?>" method="POST">
-                    <?php wp_nonce_field('send_products_to_algolia_nonce_action', 'send_products_to_algolia_nonce_name'); ?>
-                    <input type="hidden" name="send_products_to_algolia" id="send_products_to_algolia" value="true" />
-                    <?php submit_button(esc_html__('Send products to Algolia', 'algolia_woo_indexer_settings'), 'primary wide', '', false); ?>
+                    <?php wp_nonce_field('send_categories_to_algolia_nonce_action', 'send_categories_to_algolia_nonce_name'); ?>
+                    <input type="hidden" name="send_categories_to_algolia" id="send_categories_to_algolia" value="true" />
+                    <?php submit_button(esc_html__('Send categories to Algolia', 'algolia_woo_categories_indexer_settings'), 'primary wide', '', false); ?>
                 </form>
             </div>
 <?php
@@ -419,7 +416,7 @@ if (!class_exists('Algolia_Woo_Indexer')) {
         public static function get_instance()
         {
             if (!self::$instance) {
-                self::$instance = new Algolia_Woo_Indexer();
+                self::$instance = new Algolia_Woo_Category_Indexer();
             }
             return self::$instance;
         }
@@ -435,35 +432,35 @@ if (!class_exists('Algolia_Woo_Indexer')) {
             /**
              * Set default values for options if not already set
              */
-            $auto_send = get_option(ALGOWOO_DB_OPTION . AUTOMATICALLY_SEND_NEW_PRODUCTS);
-            $algolia_application_id          = get_option(ALGOWOO_DB_OPTION . ALGOLIA_APP_ID);
-            $algolia_api_key                 = get_option(ALGOWOO_DB_OPTION . ALGOLIA_API_KEY);
-            $algolia_index_name              = get_option(ALGOWOO_DB_OPTION . INDEX_NAME);
+            $auto_send = get_option(ALGOWOOCAT_DB_OPTION . AUTOMATICALLY_SEND_NEW_CATEGORIES);
+            $algolia_application_id          = get_option(ALGOWOOCAT_DB_OPTION . ALGOLIA_APP_ID);
+            $algolia_api_key                 = get_option(ALGOWOOCAT_DB_OPTION . ALGOLIA_API_KEY);
+            $algolia_index_name              = get_option(ALGOWOOCAT_DB_OPTION . INDEX_NAME);
 
             if (empty($auto_send)) {
                 add_option(
-                    ALGOWOO_DB_OPTION . AUTOMATICALLY_SEND_NEW_PRODUCTS,
+                    ALGOWOOCAT_DB_OPTION . AUTOMATICALLY_SEND_NEW_CATEGORIES,
                     '0'
                 );
             }
 
             if (empty($algolia_application_id)) {
                 add_option(
-                    ALGOWOO_DB_OPTION . ALGOLIA_APP_ID,
+                    ALGOWOOCAT_DB_OPTION . ALGOLIA_APP_ID,
                     'Change me'
                 );
             }
 
             if (empty($algolia_api_key)) {
                 add_option(
-                    ALGOWOO_DB_OPTION . ALGOLIA_API_KEY,
+                    ALGOWOOCAT_DB_OPTION . ALGOLIA_API_KEY,
                     'Change me'
                 );
             }
 
             if (empty($algolia_index_name)) {
                 add_option(
-                    ALGOWOO_DB_OPTION . INDEX_NAME,
+                    ALGOWOOCAT_DB_OPTION . INDEX_NAME,
                     'Change me'
                 );
             }

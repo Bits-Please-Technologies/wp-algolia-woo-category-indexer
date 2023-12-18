@@ -4,12 +4,12 @@
  * Algolia Woo Indexer class for sending products
  * Called from main plugin file algolia-woo-indexer.php
  *
- * @package algolia-woo-indexer
+ * @package algolia-woo-category-indexer
  */
 
-namespace Algowoo;
+namespace AlgowooCats;
 
-use \Algowoo\Algolia_Check_Requirements as Algolia_Check_Requirements;
+use \AlgowooCats\Algolia_Check_Requirements as Algolia_Check_Requirements;
 
 /**
  * Abort if this file is called directly
@@ -28,8 +28,8 @@ if (!function_exists('is_plugin_active')) {
 /**
  * Define the plugin version and the database table name
  */
-define('ALGOWOO_DB_OPTION', '_algolia_woo_indexer');
-define('ALGOWOO_CURRENT_DB_VERSION', '0.3');
+define('ALGOWOOCAT_DB_OPTION', '_algolia_woo_category_indexer');
+define('ALGOWOOCAT_CURRENT_DB_VERSION', '0.3');
 
 /**
  * Define application constants
@@ -40,20 +40,19 @@ define('CHANGE_ME', 'change me');
  * Database table names
  */
 define('INDEX_NAME', '_index_name');
-define('AUTOMATICALLY_SEND_NEW_PRODUCTS', '_automatically_send_new_products');
+define('AUTOMATICALLY_SEND_NEW_CATEGORIES', '_automatically_send_new_categories');
 define('ALGOLIA_APP_ID', '_application_id');
 define('ALGOLIA_API_KEY', '_admin_api_key');
 
-if (!class_exists('Algolia_Send_Products')) {
+if (!class_exists('Algolia_Send_Categories')) {
     /**
      * Algolia WooIndexer main class
      */
     
-    // TODO Rename class "Algolia_Send_Products" to match the regular expression ^[A-Z][a-zA-Z0-9]*$.
-    class Algolia_Send_Products
+    class Algolia_Send_Categories
     {
-        const PLUGIN_NAME      = 'Algolia Woo Indexer';
-        const PLUGIN_TRANSIENT = 'algowoo-plugin-notice';
+        const PLUGIN_NAME      = 'Algolia Woo Category Indexer';
+        const PLUGIN_TRANSIENT = 'algowoocat-plugin-notice';
 
         /**
          * The Algolia instance
@@ -74,7 +73,7 @@ if (!class_exists('Algolia_Send_Products')) {
                     'admin_notices',
                     function () {
                         echo '<div class="error notice">
-							  <p>' . esc_html__('An error has been encountered. Please check your application ID and API key. ', 'algolia-woo-indexer') . '</p>
+							  <p>' . esc_html__('An error has been encountered. Please check your application ID and API key. ', 'algolia-woo-category-indexer') . '</p>
 							</div>';
                     }
                 );
@@ -111,7 +110,7 @@ if (!class_exists('Algolia_Send_Products')) {
          * @param Int $id Product to send to Algolia if we send only a single product
          * @return void
          */
-        public static function send_products_to_algolia($id = '')
+        public static function send_categories_to_algolia($id = '')
         {
             /**
              * Remove classes from plugin URL and autoload Algolia with Composer
@@ -124,13 +123,13 @@ if (!class_exists('Algolia_Send_Products')) {
              * Fetch the required variables from the Settings API
              */
 
-            $algolia_application_id = get_option(ALGOWOO_DB_OPTION . ALGOLIA_APP_ID);
+            $algolia_application_id = get_option(ALGOWOOCAT_DB_OPTION . ALGOLIA_APP_ID);
             $algolia_application_id = is_string($algolia_application_id) ? $algolia_application_id : CHANGE_ME;
 
-            $algolia_api_key        = get_option(ALGOWOO_DB_OPTION . ALGOLIA_API_KEY);
+            $algolia_api_key        = get_option(ALGOWOOCAT_DB_OPTION . ALGOLIA_API_KEY);
             $algolia_api_key        = is_string($algolia_api_key) ? $algolia_api_key : CHANGE_ME;
 
-            $algolia_index_name     = get_option(ALGOWOO_DB_OPTION . INDEX_NAME);
+            $algolia_index_name     = get_option(ALGOWOOCAT_DB_OPTION . INDEX_NAME);
             $algolia_index_name        = is_string($algolia_index_name) ? $algolia_index_name : CHANGE_ME;
 
             /**
@@ -155,9 +154,9 @@ if (!class_exists('Algolia_Send_Products')) {
             $index = self::$algolia->initIndex($algolia_index_name);
 
             /**
-             * Setup arguments for sending all products to Algolia
+             * Setup arguments for sending all categories to Algolia
              *
-             * Limit => -1 means we send all products
+             * Limit => -1 means we send all categories
              */
             $arguments = array(
                 'status'   => 'publish',
@@ -166,7 +165,7 @@ if (!class_exists('Algolia_Send_Products')) {
             );
 
             /**
-             * Setup arguments for sending only a single product
+             * Setup arguments for sending only a single category
              */
             if (isset($id) && '' !== $id) {
                 $arguments = array(
@@ -176,46 +175,26 @@ if (!class_exists('Algolia_Send_Products')) {
                 );
             }
 
-            /**
-             * Fetch all products from WooCommerce
-             *
-             * @see https://docs.woocommerce.com/wc-apidocs/function-wc_get_products.html
-             */
-            $products =
-                /** @scrutinizer ignore-call */
-                wc_get_products($arguments);
+            $categories = get_terms( ['taxonomy' => 'product_cat'] );
 
-            if (empty($products)) {
+            if (empty($categories)) {
                 return;
             }
             $records = array();
             $record  = array();
 
-            foreach ($products as $product) {
-                /**
-                 * Set sale price or regular price based on product type
-                 */
-                $product_type_price = self::get_product_type_price($product);
-                $sale_price = $product_type_price['sale_price'];
-                $regular_price = $product_type_price['regular_price']; 
+            foreach ($categories as $category) {
 
-                /**
-                 * Extract image from $product->get_image()
-                 */
-                preg_match('/<img(.*)src(.*)=(.*)"(.*)"/U', $product->get_image(), $result);
-                $product_image = array_pop($result);
-                /**
-                 * Build the record array using the information from the WooCommerce product
-                 */
-                $record['objectID']                      = $product->get_id();
-                $record['product_name']                  = $product->get_name();
-                $record['product_image']                 = $product_image;
-                $record['short_description']             = $product->get_short_description();
-                $record['regular_price']                 = $regular_price;
-                $record['sale_price']                    = $sale_price;
-                $record['on_sale']                       = $product->is_on_sale();
+                $thumbnail_id = get_term_meta( $category->term_id, 'thumbnail_id', true );
+                $image = wp_get_attachment_url( $thumbnail_id );
+
+                $record['objectID'] = $category->term_id;
+                $record['slug'] = $category->slug;
+                $record['name'] = $category->name; 
+                $record['image_url'] = $image;
                 $records[] = $record;
             }
+
             wp_reset_postdata();
 
             /**
@@ -225,14 +204,14 @@ if (!class_exists('Algolia_Send_Products')) {
             $result = $index->saveObjects($records);
 
             if ('Algolia\AlgoliaSearch\Response\NullResponse' === get_class($result)) {
-                wp_die(esc_html__('No response from the server. Please check your settings and try again', 'algolia_woo_indexer_settings'));
+                wp_die(esc_html__('No response from the server. Please check your settings and try again', 'algolia_woo_category_indexer_settings'));
             }
 
             /**
              * Display success message
              */
             echo '<div class="notice notice-success is-dismissible">
-					 	<p>' . esc_html__('Product(s) sent to Algolia.', 'algolia-woo-indexer') . '</p>
+					 	<p>' . esc_html__('Categories sent to Algolia.', 'algolia-woo-category-indexer') . '</p>
 				  		</div>';
         }
     }

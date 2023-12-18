@@ -13,10 +13,10 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-define( 'ALGOWOO_DB_OPTION', '_algolia_woo_indexer' );
+define( 'ALGOWOOCAT_DB_OPTION', '_algolia_woo_category_indexer' );
 
-delete_option( ALGOWOO_DB_OPTION . '_application_id' );
-delete_option( ALGOWOO_DB_OPTION . '_admin_api_key' );
-delete_option( ALGOWOO_DB_OPTION . '_index_name' );
-delete_option( ALGOWOO_DB_OPTION . '_index_in_stock' );
-delete_option( ALGOWOO_DB_OPTION . '_automatically_send_new_products' );
+delete_option( ALGOWOOCAT_DB_OPTION . '_application_id' );
+delete_option( ALGOWOOCAT_DB_OPTION . '_admin_api_key' );
+delete_option( ALGOWOOCAT_DB_OPTION . '_index_name' );
+delete_option( ALGOWOOCAT_DB_OPTION . '_index_in_stock' );
+delete_option( ALGOWOOCAT_DB_OPTION . '_automatically_send_new_categories' );

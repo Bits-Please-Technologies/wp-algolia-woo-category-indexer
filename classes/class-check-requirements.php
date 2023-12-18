@@ -3,10 +3,10 @@
  * Class for checking plugin requirements
  * Like checking PHP version, WordPress version and so on
  *
- * @package algolia-woo-indexer
+ * @package algolia-woo-category-indexer
  */
 
-namespace Algowoo;
+namespace AlgowooCats;
 
 /**
  * Define minimum required versions of PHP and WordPress
@@ -56,7 +56,7 @@ if (! class_exists('Algolia_Check_Requirements')) {
                     'admin_notices',
                     function () {
                         echo '<div class="error notice">
-							  <p>' . esc_html__('All settings need to be set for the plugin to work.', 'algolia-woo-indexer') . '</p>
+							  <p>' . esc_html__('All settings need to be set for the plugin to work.', 'algolia-woo-category-indexer') . '</p>
 							</div>';
                     }
                 );    
@@ -85,16 +85,16 @@ if (! class_exists('Algolia_Check_Requirements')) {
         {
             if (! extension_loaded('mbstring')) {
                 echo '<div class="error notice">
-					  <p>' . esc_html__('Algolia Woo Indexer requires the "mbstring" PHP extension to be enabled. Please contact your hosting provider.', 'algolia-woo-indexer') . '</p>
+					  <p>' . esc_html__('Algolia Woo Category Indexer requires the "mbstring" PHP extension to be enabled. Please contact your hosting provider.', 'algolia-woo-indexer') . '</p>
 				  </div>';
             } elseif (! function_exists('mb_ereg_replace')) {
                 echo '<div class="error notice">
-					  <p>' . esc_html__('Algolia Woo Indexer needs "mbregex" NOT to be disabled. Please contact your hosting provider.', 'algolia-woo-indexer') . '</p>
+					  <p>' . esc_html__('Algolia Woo Category Indexer needs "mbregex" NOT to be disabled. Please contact your hosting provider.', 'algolia-woo-indexer') . '</p>
 				  </div>';
             }
             if (! extension_loaded('curl')) {
                 echo '<div class="error notice">
-					  <p>' . esc_html__('Algolia Woo Indexer requires the "cURL" PHP extension to be enabled. Please contact your hosting provider.', 'algolia-woo-indexer') . '</p>
+					  <p>' . esc_html__('Algolia Woo Category Indexer requires the "cURL" PHP extension to be enabled. Please contact your hosting provider.', 'algolia-woo-indexer') . '</p>
 				  </div>';
                 return;
             }
